@@ -1,5 +1,25 @@
+
 plugins {
     id 'com.gradle.build-scan' version '1.8'
 }
 
+apply plugin: 'java'
+apply plugin: 'application'
+
+description = 'Google Photos custom syncer'
+version = '0.9'
+
+
 buildScan { licenseAgreementUrl = 'https://gradle.com/terms-of-service'; licenseAgree = 'yes' }
+
+repositories {
+    jcenter()
+    //mavenCentral()
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+    compile 'com.drewnoakes:metadata-extractor:2.10.1'
+}
+
+mainClassName = 'GPhotosSyncer'
