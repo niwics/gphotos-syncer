@@ -22,4 +22,4 @@ dependencies {
     compile 'com.drewnoakes:metadata-extractor:2.10.1'
 }
 
-mainClassName = 'GPhotosSyncer'
+mainClassName = 'cz.niwi.gphotossyncer.GPhotosSyncer'
