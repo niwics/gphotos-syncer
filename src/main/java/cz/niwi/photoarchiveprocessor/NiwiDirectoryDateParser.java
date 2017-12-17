@@ -1,7 +1,5 @@
-package cz.niwi.gphotossyncer;
+package cz.niwi.photoarchiveprocessor;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.time.Month;
 import java.time.format.TextStyle;
 import java.util.ArrayList;

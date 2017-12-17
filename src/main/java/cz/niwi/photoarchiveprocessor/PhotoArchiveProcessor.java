@@ -1,14 +1,11 @@
-package cz.niwi.gphotossyncer;
+package cz.niwi.photoarchiveprocessor;
 
 import java.io.IOException;
-import java.nio.file.StandardCopyOption;
 import java.security.InvalidParameterException;
 import java.util.*;
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.regex.Pattern;
 
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Directory;
@@ -16,7 +13,7 @@ import com.drew.metadata.Metadata;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Tag;
 
-class GPhotosSyncer {
+class PhotoArchiveProcessor {
 
     private File rootPath;
     private DateMarker presetDirectoryDateMarker;
@@ -24,15 +21,15 @@ class GPhotosSyncer {
     private DirectoryDateParser directoryDateParser = new NiwiDirectoryDateParser();
     private ArrayList<File> invalidPaths = new ArrayList<File>();
 
-    public GPhotosSyncer(String rootPath) {
+    public PhotoArchiveProcessor(String rootPath) {
         this(rootPath, null);
     }
 
-    public GPhotosSyncer(String rootPath, DateMarker presetDirectoryDateMarker) {
+    public PhotoArchiveProcessor(String rootPath, DateMarker presetDirectoryDateMarker) {
         this(rootPath, presetDirectoryDateMarker, false);
     }
 
-    public GPhotosSyncer(String rootPath, DateMarker presetDirectoryDateMarker, boolean processExactPath) {
+    public PhotoArchiveProcessor(String rootPath, DateMarker presetDirectoryDateMarker, boolean processExactPath) {
         if (processExactPath && presetDirectoryDateMarker == null)
             throw new InvalidParameterException("Exact path must be set with pre-set date marker only!");
         this.rootPath = new File(rootPath);
@@ -179,13 +176,11 @@ class GPhotosSyncer {
         }
         return isMatch;
     }
-    }
-
 
     public static void main(String[] args) {
         // TODO testing value - should be obtained as program parameter
         String testRootPath = "/my/src/path";
-        GPhotosSyncer syncer = new GPhotosSyncer(testRootPath);
+        PhotoArchiveProcessor syncer = new PhotoArchiveProcessor(testRootPath);
         syncer.sync();
     }
 }

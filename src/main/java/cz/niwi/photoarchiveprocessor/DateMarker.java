@@ -1,4 +1,4 @@
-package cz.niwi.gphotossyncer;
+package cz.niwi.photoarchiveprocessor;
 
 import java.security.InvalidParameterException;
 
