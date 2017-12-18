@@ -42,6 +42,16 @@ class PhotoArchiveProcessor {
     private String getTag() { return "alterna"; }
     private Path getTargetPath() {return Paths.get("/tmp/gphs"); }
 
+    protected boolean hasPresetYear() {
+        return this.presetDirectoryDateMarker != null && this.presetDirectoryDateMarker.getYear() > 0;
+    }
+    protected boolean hasPresetMonth() {
+        return this.presetDirectoryDateMarker != null && this.presetDirectoryDateMarker.getMonth() > 0;
+    }
+    protected boolean hasPresetDay() {
+        return this.presetDirectoryDateMarker != null && this.presetDirectoryDateMarker.getDay() > 0;
+    }
+
 
     public void sync() {
         if (this.processExactPath) {
@@ -65,13 +75,12 @@ class PhotoArchiveProcessor {
             if (!f.isDirectory())
                 continue;
             short year = this.getDirectoryDateParser().parseYear(yearDirName);
-            if (year != 0 &&
-                    (this.presetDirectoryDateMarker == null || this.presetDirectoryDateMarker.getYear() == year)) {
+            if (year != 0 && (!this.hasPresetYear() || this.presetDirectoryDateMarker.getYear() == year)) {
                 yearFound = true;
                 this.processYearDir(f, new DateMarker(year));
             }
         }
-        if (this.presetDirectoryDateMarker != null && !yearFound)
+        if (this.hasPresetYear() && !yearFound)
             System.err.println("Preset year not found.");
     }
 
@@ -88,16 +97,14 @@ class PhotoArchiveProcessor {
             if (!f.isDirectory())
                 continue;
             byte month = this.getDirectoryDateParser().parseMonth(monthDirName);
-            if (month != 0) {
-                 if (this.presetDirectoryDateMarker == null || this.presetDirectoryDateMarker.getMonth() == month) {
-                    monthFound = true;
-                    this.processMonthDir(f, dateMarker.cloneWithMonth(month));
-                }
+            if (month != 0 && (!this.hasPresetMonth() || this.presetDirectoryDateMarker.getMonth() == month)) {
+                monthFound = true;
+                this.processMonthDir(f, dateMarker.cloneWithMonth(month));
             }
             else
                 System.out.println("Non valid " + (f.isDirectory() ? "directory" : "file") + ": " + f.getName());
         }
-        if (this.presetDirectoryDateMarker != null && !monthFound)
+        if (this.hasPresetMonth() && !monthFound)
             System.err.println("Preset month not found.");
     }
 
@@ -114,18 +121,17 @@ class PhotoArchiveProcessor {
             if (!f.isDirectory())
                 continue;
             byte day = this.getDirectoryDateParser().parseDay(dayDirName);
-            if (day != 0) {
-                if (this.presetDirectoryDateMarker == null || this.presetDirectoryDateMarker.getDay() == day) {
-                    dayFound = true;
-                    this.processDayDir(f, dateMarker.cloneWithDay(day), false);
-                }
+            if (day != 0 && (!this.hasPresetDay() || this.presetDirectoryDateMarker.getDay() == day)) {
+                dayFound = true;
+                this.processDayDir(f, dateMarker.cloneWithDay(day), false);
             }
             else
                 System.out.println("Non valid " + (f.isDirectory() ? "directory" : "file") + ": " + f.getName());
         }
-        if (this.presetDirectoryDateMarker != null && !dayFound)
+        if (this.hasPresetDay() && !dayFound)
             System.err.println("Preset day not found.");
     }
+
 
     private void processDayDir(File dayDir, DateMarker dateMarker, boolean isSpecialDir) {
         File[] files = dayDir.listFiles();
