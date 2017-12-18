@@ -81,4 +81,8 @@ public class DateMarker {
     public byte getDay() {
         return day;
     }
+
+    public String getIsoDate() {
+        return String.format("%02d-%02d-%02d", this.getYear(), this.getMonth(), this.getDay());
+    }
 }

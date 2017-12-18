@@ -19,6 +19,7 @@ class PhotoArchiveProcessor {
     private DateMarker presetDirectoryDateMarker;
     private boolean processExactPath;
     private DirectoryDateParser directoryDateParser = new NiwiDirectoryDateParser();
+    private String imageTag;
     private ArrayList<File> invalidPaths = new ArrayList<File>();
 
     public PhotoArchiveProcessor(String rootPath) {
@@ -37,10 +38,10 @@ class PhotoArchiveProcessor {
         this.processExactPath = processExactPath;
     }
 
-    public File getRootPath() { return rootPath; }
-    public DirectoryDateParser getDirectoryDateParser() { return directoryDateParser; }
-    private String getTag() { return "alterna"; }
-    private Path getTargetPath() {return Paths.get("/tmp/gphs"); }
+    protected File getRootPath() { return rootPath; }
+    protected DirectoryDateParser getDirectoryDateParser() { return directoryDateParser; }
+    protected String getImageTag() { return this.imageTag; }
+    protected void setImageTag(String imageTag) { this.imageTag = imageTag; }
 
     protected boolean hasPresetYear() {
         return this.presetDirectoryDateMarker != null && this.presetDirectoryDateMarker.getYear() > 0;
@@ -150,7 +151,8 @@ class PhotoArchiveProcessor {
             System.out.println("MATCHED " + matched);
     }
 
-    private boolean processFile(File f, DateMarker dateMarker) {
+
+    protected boolean processFile(File f, DateMarker dateMarker) {
 
         boolean isMatch = false;
         // Skip all except JPEG files
@@ -158,30 +160,46 @@ class PhotoArchiveProcessor {
         if (!filenameLowercase.endsWith(".jpg") && !filenameLowercase.endsWith(".jpeg"))
             return false;
 
-        Metadata metadata;
-        try {
-            metadata = ImageMetadataReader.readMetadata(f);
-        } catch (ImageProcessingException e) {
-            System.out.println("Probably not image file: " + f.getName());
-            return false;
-        } catch (IOException e) {
-            System.out.println("File reading error: " + f.getName());
-            return false;
-        }
+        if (this.getImageTag() == null)
+            isMatch = true;
+        else {
+            Metadata metadata;
+            try {
+                metadata = ImageMetadataReader.readMetadata(f);
+            } catch (ImageProcessingException e) {
+                System.out.println("Probably not image file: " + f.getName());
+                return false;
+            } catch (IOException e) {
+                System.out.println("File reading error: " + f.getName());
+                return false;
+            }
 
-        for (Directory metadataDir : metadata.getDirectories()) {
-            if (metadataDir.getName().equals("IPTC")) {
-                for (Tag tag : metadataDir.getTags()) {
-                    if (tag.getTagName().equals("Keywords") &&
-                            tag.getDescription().matches(".*\\b"+ this.getTag() +"\\b.*")) {
-                        System.out.println("MATCHED " + this.getTag() + " image: " + f.getName() + " - " + tag.getDescription());
-                        isMatch = true;
+            for (Directory metadataDir : metadata.getDirectories()) {
+                if (metadataDir.getName().equals("IPTC")) {
+                    for (Tag tag : metadataDir.getTags()) {
+                        if (tag.getTagName().equals("Keywords") &&
+                                tag.getDescription().matches(".*\\b" + this.getImageTag() + "\\b.*")) {
+                            isMatch = true;
+                        }
                     }
                 }
             }
         }
+
+        if (isMatch)
+            this.performPhotoAction(f, dateMarker);
         return isMatch;
     }
+
+
+    protected boolean performPhotoAction(File f, DateMarker dateMarker) {
+        if (this.getImageTag() != null)
+            System.out.println("MATCHED tag " + this.getImageTag() + " on image: " + f.getName());
+        else
+            System.out.println("MATCHED image: " + f.getName());
+        return true;
+    }
+
 
     public static void main(String[] args) {
         // TODO testing value - should be obtained as program parameter

@@ -42,8 +42,6 @@ public class NiwiDirectoryDateParser implements DirectoryDateParser {
     }
 
     public byte parseDay(String dayString) {
-        String dayNumberString;
-        //dayString.matches("\\d{8}")
         Pattern pattern = Pattern.compile("(([0123]?\\d)(\\.?\\s+\\w+.*)?)|(\\d{6}(\\d{2}))", Pattern.UNICODE_CHARACTER_CLASS);
         Matcher m = pattern.matcher(dayString);
         if (m.matches()) {
