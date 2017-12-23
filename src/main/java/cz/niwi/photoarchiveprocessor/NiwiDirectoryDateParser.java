@@ -8,12 +8,13 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Date string parser for naming conventions used in my personal photo archive.
+ */
 public class NiwiDirectoryDateParser implements DirectoryDateParser {
 
-    public NiwiDirectoryDateParser() {}
-
     /**
-     * Parses the year directory name and return the year value if matches the pattern or 0 otherwise.
+     * Parses the year name and return the year value if matches the pattern or 0 otherwise.
      * @return
      */
     public short parseYear(String yearString) {
@@ -25,6 +26,14 @@ public class NiwiDirectoryDateParser implements DirectoryDateParser {
         return 0;
     }
 
+    /**
+     * Parses the month name and return the year value if matches the pattern or 0 otherwise.
+     * Supported format examples:
+     * - "12"
+     * - "12 - prosinec"
+     * @param monthString
+     * @return
+     */
     public byte parseMonth(String monthString) {
 
         ArrayList<String> possibleMonthNames = new ArrayList<String>();
@@ -33,7 +42,6 @@ public class NiwiDirectoryDateParser implements DirectoryDateParser {
             String monthName = Month.of(i).getDisplayName(TextStyle.FULL_STANDALONE, new Locale("cs"));
             possibleMonthNames.add(monthNum);
             possibleMonthNames.add(monthNum + " - " + monthName);
-            possibleMonthNames.add(monthName + ". " + monthName);
         }
 
         if (possibleMonthNames.contains(monthString.toLowerCase()))
@@ -41,6 +49,14 @@ public class NiwiDirectoryDateParser implements DirectoryDateParser {
         return 0;
     }
 
+    /**
+     * Parses the day name and return the year value if matches the pattern or 0 otherwise.
+     * Supported formats examples:
+     *  - "24. neděle Štědrý den"
+     *  - "99999924"
+     * @param dayString
+     * @return
+     */
     public byte parseDay(String dayString) {
         Pattern pattern = Pattern.compile("(([0123]?\\d)(\\.?\\s+\\w+.*)?)|(\\d{6}(\\d{2}))", Pattern.UNICODE_CHARACTER_CLASS);
         Matcher m = pattern.matcher(dayString);

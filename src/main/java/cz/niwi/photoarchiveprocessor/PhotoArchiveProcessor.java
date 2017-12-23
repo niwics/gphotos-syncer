@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.*;
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Directory;
@@ -13,23 +11,56 @@ import com.drew.metadata.Metadata;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Tag;
 
+/**
+ * Base photo processor.
+ */
 class PhotoArchiveProcessor {
 
+    /**
+     * Path to the root source photo directory.
+     */
     private File rootPath;
+    /**
+     * Date marker which could be used when we want to process just certain year/month/day.
+     */
     private DateMarker presetDirectoryDateMarker;
+    /**
+     * Flag which denotes that in rootPath is actually not the root photo directory, but that it exact path.
+     * It is necessary to use this flag with presetDateMarker.
+     */
     private boolean processExactPath;
+    /**
+     * Parser of directories names.
+     */
     private DirectoryDateParser directoryDateParser = new NiwiDirectoryDateParser();
+    /**
+     * EXIF tag which use to filter images.
+     */
     private String imageTag;
-    private ArrayList<File> invalidPaths = new ArrayList<File>();
 
+    /**
+     * Constructor.
+     * @param rootPath
+     */
     public PhotoArchiveProcessor(String rootPath) {
         this(rootPath, null);
     }
 
+    /**
+     * Constructor.
+     * @param rootPath
+     * @param presetDirectoryDateMarker
+     */
     public PhotoArchiveProcessor(String rootPath, DateMarker presetDirectoryDateMarker) {
         this(rootPath, presetDirectoryDateMarker, false);
     }
 
+    /**
+     * Constructor.
+     * @param rootPath
+     * @param presetDirectoryDateMarker
+     * @param processExactPath
+     */
     public PhotoArchiveProcessor(String rootPath, DateMarker presetDirectoryDateMarker, boolean processExactPath) {
         if (processExactPath && presetDirectoryDateMarker == null)
             throw new InvalidParameterException("Exact path must be set with pre-set date marker only!");
@@ -43,18 +74,35 @@ class PhotoArchiveProcessor {
     protected String getImageTag() { return this.imageTag; }
     protected void setImageTag(String imageTag) { this.imageTag = imageTag; }
 
+    /**
+     * Determines whether some year is preset to process.
+     * @return
+     */
     protected boolean hasPresetYear() {
         return this.presetDirectoryDateMarker != null && this.presetDirectoryDateMarker.getYear() > 0;
     }
+
+    /**
+     * Determines whether some month is preset to process.
+     * @return
+     */
     protected boolean hasPresetMonth() {
         return this.presetDirectoryDateMarker != null && this.presetDirectoryDateMarker.getMonth() > 0;
     }
+
+    /**
+     * Determines whether some day is preset to process.
+     * @return
+     */
     protected boolean hasPresetDay() {
         return this.presetDirectoryDateMarker != null && this.presetDirectoryDateMarker.getDay() > 0;
     }
 
 
-    public void sync() {
+    /**
+     * Process the data.
+     */
+    public void process() {
         if (this.processExactPath) {
             if (this.presetDirectoryDateMarker.hasDay())
                 this.processDayDir(this.getRootPath(), this.presetDirectoryDateMarker, false);
@@ -86,6 +134,11 @@ class PhotoArchiveProcessor {
     }
 
 
+    /**
+     * Process one single year directory.
+     * @param yearDir
+     * @param dateMarker Current date marker
+     */
     private void processYearDir(File yearDir, DateMarker dateMarker) {
         System.out.println("Processing the year: " + dateMarker.getYear());
 
@@ -109,7 +162,11 @@ class PhotoArchiveProcessor {
             System.err.println("Preset month not found.");
     }
 
-
+    /**
+     * Process one single month directory.
+     * @param monthDir
+     * @param dateMarker Current date marker
+     */
     private void processMonthDir(File monthDir, DateMarker dateMarker) {
         System.out.println("Processing the month: " + dateMarker.getMonth());
 
@@ -134,17 +191,28 @@ class PhotoArchiveProcessor {
     }
 
 
-    private void processDayDir(File dayDir, DateMarker dateMarker, boolean isSpecialDir) {
+    /**
+     * Process one single day directory.
+     * @param dayDir
+     * @param dateMarker Current date marker
+     * @param isDaySubdir Is subdirectory in day directory?
+     */
+    private void processDayDir(File dayDir, DateMarker dateMarker, boolean isDaySubdir) {
         File[] files = dayDir.listFiles();
         int matched = 0;
         for (int i = 0; i < files.length; i++) {
             File f = files[i];
             if (f.isDirectory()) {
-                //System.out.println("Processing day subdirectory: " + f.getName());
+                if (isDaySubdir) {
+                    System.err.println("Days could not contain two levels of subdirectories: " + f.getPath());
+                    continue;
+                }
+
+                System.out.println("Processing day subdirectory: " + f.getName());
                 this.processDayDir(f, dateMarker, true);
                 continue;
             }
-            if (this.processFile(f, dateMarker))
+            if (this.processFile(f, dateMarker, isDaySubdir))
                 matched++;
         }
         if (matched > 0)
@@ -152,11 +220,18 @@ class PhotoArchiveProcessor {
     }
 
 
-    protected boolean processFile(File f, DateMarker dateMarker) {
+    /**
+     * Process single file.
+     * @param file
+     * @param dateMarker
+     * @param isDaySubdir
+     * @return
+     */
+    protected boolean processFile(File file, DateMarker dateMarker, boolean isDaySubdir) {
 
         boolean isMatch = false;
         // Skip all except JPEG files
-        String filenameLowercase = f.getName().toLowerCase();
+        String filenameLowercase = file.getName().toLowerCase();
         if (!filenameLowercase.endsWith(".jpg") && !filenameLowercase.endsWith(".jpeg"))
             return false;
 
@@ -165,12 +240,12 @@ class PhotoArchiveProcessor {
         else {
             Metadata metadata;
             try {
-                metadata = ImageMetadataReader.readMetadata(f);
+                metadata = ImageMetadataReader.readMetadata(file);
             } catch (ImageProcessingException e) {
-                System.out.println("Probably not image file: " + f.getName());
+                System.out.println("Probably not image file: " + file.getName());
                 return false;
             } catch (IOException e) {
-                System.out.println("File reading error: " + f.getName());
+                System.out.println("File reading error: " + file.getName());
                 return false;
             }
 
@@ -187,24 +262,35 @@ class PhotoArchiveProcessor {
         }
 
         if (isMatch)
-            this.performPhotoAction(f, dateMarker);
+            this.performPhotoAction(file, dateMarker, isDaySubdir);
         return isMatch;
     }
 
 
-    protected boolean performPhotoAction(File f, DateMarker dateMarker) {
+    /**
+     * Perform the final action with the photo file. THis implementation just prints
+     * @param file
+     * @param dateMarker
+     * @param isSpecialDir
+     * @return
+     */
+    protected boolean performPhotoAction(File file, DateMarker dateMarker, boolean isSpecialDir) {
         if (this.getImageTag() != null)
-            System.out.println("MATCHED tag " + this.getImageTag() + " on image: " + f.getName());
+            System.out.println("MATCHED tag " + this.getImageTag() + " on image: " + file.getName());
         else
-            System.out.println("MATCHED image: " + f.getName());
+            System.out.println("MATCHED image: " + file.getName());
         return true;
     }
 
 
+    /**
+     * Main program entrypoint.
+     * @param args
+     */
     public static void main(String[] args) {
         // TODO testing value - should be obtained as program parameter
-        String testRootPath = "/my/src/path";
+        String testRootPath = "/media/sesto/Fotky";
         PhotoArchiveProcessor syncer = new PhotoArchiveProcessor(testRootPath);
-        syncer.sync();
+        syncer.process();
     }
 }
