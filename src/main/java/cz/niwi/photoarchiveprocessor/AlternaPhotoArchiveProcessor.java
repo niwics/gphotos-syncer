@@ -44,7 +44,6 @@ public class AlternaPhotoArchiveProcessor extends PhotoArchiveProcessor {
      */
     public AlternaPhotoArchiveProcessor(String rootPath, DateMarker presetDirectoryDateMarker, boolean processExactPath) {
         super(rootPath, presetDirectoryDateMarker, processExactPath);
-        this.setImageTag("alterna");
     }
 
     protected Path getTargetPath() {return this.targetPath; }
@@ -66,6 +65,23 @@ public class AlternaPhotoArchiveProcessor extends PhotoArchiveProcessor {
 
         }
         this.targetPath = path;
+    }
+
+
+    /**
+     * Process single file.
+     * @param file
+     * @param dateMarker
+     * @param isDaySubdir
+     * @return
+     */
+    protected boolean processFile(File file, DateMarker dateMarker, boolean isDaySubdir) {
+
+        if (this.fileHasTag(file, "alterna")) { // TODO hardcoded
+            this.performPhotoAction(file, dateMarker, isDaySubdir);
+            return true;
+        }
+        return false;
     }
 
     /**

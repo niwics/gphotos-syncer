@@ -7,3 +7,13 @@ Tool for performing various actions with my photo archive on HDD:
 ## Photos could be selected by:
 - date (derived from file path)
 - custom EXIF tag
+
+## Building
+```bash
+gradle
+```
+
+## Basic usage
+```bash
+gradle run
+```

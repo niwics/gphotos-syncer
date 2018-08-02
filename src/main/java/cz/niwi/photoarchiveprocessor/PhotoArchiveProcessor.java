@@ -1,15 +1,17 @@
 package cz.niwi.photoarchiveprocessor;
 
-import java.io.IOException;
-import java.security.InvalidParameterException;
-import java.util.*;
-import java.io.File;
-
+import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
-import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Tag;
+
+import java.io.File;
+import java.io.IOException;
+import java.security.InvalidParameterException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base photo processor.
@@ -33,10 +35,6 @@ class PhotoArchiveProcessor {
      * Parser of directories names.
      */
     private DirectoryDateParser directoryDateParser = new NiwiDirectoryDateParser();
-    /**
-     * EXIF tag which use to filter images.
-     */
-    private String imageTag;
 
     /**
      * Constructor.
@@ -71,8 +69,6 @@ class PhotoArchiveProcessor {
 
     protected File getRootPath() { return rootPath; }
     protected DirectoryDateParser getDirectoryDateParser() { return directoryDateParser; }
-    protected String getImageTag() { return this.imageTag; }
-    protected void setImageTag(String imageTag) { this.imageTag = imageTag; }
 
     /**
      * Determines whether some year is preset to process.
@@ -228,58 +224,49 @@ class PhotoArchiveProcessor {
      * @return
      */
     protected boolean processFile(File file, DateMarker dateMarker, boolean isDaySubdir) {
+        System.out.println("PROCESSED image: " + file.getName());
+        return true;
+    }
 
-        boolean isMatch = false;
+
+    /**
+     * Process single file.
+     * @param file
+     * @return
+     */
+    protected boolean fileHasTag(File file, String tag) {
+
+        if (tag == null)
+            return false;
+
         // Skip all except JPEG files
         String filenameLowercase = file.getName().toLowerCase();
         if (!filenameLowercase.endsWith(".jpg") && !filenameLowercase.endsWith(".jpeg"))
             return false;
 
-        if (this.getImageTag() == null)
-            isMatch = true;
-        else {
-            Metadata metadata;
-            try {
-                metadata = ImageMetadataReader.readMetadata(file);
-            } catch (ImageProcessingException e) {
-                System.out.println("Probably not image file: " + file.getName());
-                return false;
-            } catch (IOException e) {
-                System.out.println("File reading error: " + file.getName());
-                return false;
-            }
+        Metadata metadata;
+        try {
+            metadata = ImageMetadataReader.readMetadata(file);
+        } catch (ImageProcessingException e) {
+            System.out.println("Probably not image file: " + file.getName());
+            return false;
+        } catch (IOException e) {
+            System.out.println("File reading error: " + file.getName());
+            return false;
+        }
 
-            for (Directory metadataDir : metadata.getDirectories()) {
-                if (metadataDir.getName().equals("IPTC")) {
-                    for (Tag tag : metadataDir.getTags()) {
-                        if (tag.getTagName().equals("Keywords") &&
-                                tag.getDescription().matches(".*\\b" + this.getImageTag() + "\\b.*")) {
-                            isMatch = true;
-                        }
+        for (Directory metadataDir : metadata.getDirectories()) {
+            if (metadataDir.getName().equals("IPTC")) {
+                for (Tag currentTag : metadataDir.getTags()) {
+                    if (currentTag.getTagName().equals("Keywords") &&
+                            currentTag.getDescription().matches(".*\\b" + tag + "\\b.*")) {
+                        return true;
                     }
                 }
             }
         }
 
-        if (isMatch)
-            this.performPhotoAction(file, dateMarker, isDaySubdir);
-        return isMatch;
-    }
-
-
-    /**
-     * Perform the final action with the photo file. THis implementation just prints
-     * @param file
-     * @param dateMarker
-     * @param isSpecialDir
-     * @return
-     */
-    protected boolean performPhotoAction(File file, DateMarker dateMarker, boolean isSpecialDir) {
-        if (this.getImageTag() != null)
-            System.out.println("MATCHED tag " + this.getImageTag() + " on image: " + file.getName());
-        else
-            System.out.println("MATCHED image: " + file.getName());
-        return true;
+        return false;
     }
 
 
