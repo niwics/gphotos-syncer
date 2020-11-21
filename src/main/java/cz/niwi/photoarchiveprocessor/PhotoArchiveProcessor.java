@@ -234,14 +234,14 @@ class PhotoArchiveProcessor {
      * @param file
      * @return
      */
-    protected boolean fileHasTag(File file, String tag) {
+    static boolean fileHasTag(File file, String tag) {
 
         if (tag == null)
             return false;
 
         // Skip all except JPEG files
         String filenameLowercase = file.getName().toLowerCase();
-        if (!filenameLowercase.endsWith(".jpg") && !filenameLowercase.endsWith(".jpeg"))
+        if (!PhotoArchiveProcessor.fileHasExtension(file, Arrays.asList("jpg", "jpeg")))
             return false;
 
         Metadata metadata;
@@ -270,14 +270,23 @@ class PhotoArchiveProcessor {
     }
 
 
+    static boolean fileHasExtension(File file, List<String> extensionList) {
+        String extension = "";
+        String fileName = file.getName().toLowerCase();
+        if (fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0)
+            extension = fileName.substring(fileName.lastIndexOf(".")+1);
+        return extensionList.contains(extension);
+    }
+
+
     /**
      * Main program entrypoint.
      * @param args
      */
     public static void main(String[] args) {
         // TODO testing value - should be obtained as program parameter
-        String testRootPath = "/media/sesto/Fotky";
-        PhotoArchiveProcessor syncer = new PhotoArchiveProcessor(testRootPath);
+        String testRootPath = "/Users/miroslav.kvasnica/Pictures/camera";
+        PhotoArchiveProcessor syncer = new FTPSyncProcessor(testRootPath);
         syncer.process();
     }
 }

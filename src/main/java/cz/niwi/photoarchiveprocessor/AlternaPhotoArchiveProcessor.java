@@ -77,7 +77,7 @@ public class AlternaPhotoArchiveProcessor extends PhotoArchiveProcessor {
      */
     protected boolean processFile(File file, DateMarker dateMarker, boolean isDaySubdir) {
 
-        if (this.fileHasTag(file, "alterna")) { // TODO hardcoded
+        if (PhotoArchiveProcessor.fileHasTag(file, "alterna")) { // TODO hardcoded
             this.performPhotoAction(file, dateMarker, isDaySubdir);
             return true;
         }

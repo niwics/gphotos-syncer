@@ -20,6 +20,8 @@ repositories {
 dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.drewnoakes:metadata-extractor:2.10.1'
+    compile 'com.google.auth:google-auth-library-appengine:0.9.1'
+    compile 'com.jcraft:jsch:0.1.54'
 }
 
 mainClassName = 'cz.niwi.photoarchiveprocessor.PhotoArchiveProcessor'
